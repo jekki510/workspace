@@ -1,4 +1,4 @@
-name: Deploy Storybook to GitHub Pages
+name: Build and Deploy Storybook
 
 on:
   push:
@@ -11,28 +11,35 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
+          node-version: '18'
           cache: 'npm'
           cache-dependency-path: storybook/package-lock.json
+          
       - name: Install dependencies
         run: |
           cd storybook
           npm ci
+          
       - name: Build Storybook
         run: |
           cd storybook
           npm run build-storybook
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: './storybook/storybook-static'
+          
       - name: Deploy to GitHub Pages
-        run: |
-          cd storybook
-          npm run deploy-storybook
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/deploy-pages@v2
